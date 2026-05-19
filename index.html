@@ -10,7 +10,7 @@
     <!-- PWA를 위한 설정 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3b82f6">
-    <link rel="apple-touch-icon" href="ewallet.png">
+    <link class="apple-touch-icon" href="ewallet.png">
     
     <!-- 모바일 크롬 테마 색상 및 단독 실행 설정 -->
     <meta name="theme-color" content="#4f46e5">
@@ -447,13 +447,13 @@
                 const totalAmount = parseInt(value) || 0;
 
                 if (totalAmount > 0) {
-                    // 공급가액 계산: 1.1로 나눈 후 1원 단위를 10원 단위로 반올림
+                    // 공급가액 계산: 1.1로 나눈 후 1원 단위를 10원 단위로 "무조건 올림(ceil)"
                     const rawSupply = totalAmount / 1.1;
-                    const supply = Math.round(rawSupply / 10) * 10;
+                    const supply = Math.ceil(rawSupply / 10) * 10;
 
-                    // 부가가치세 계산: 10% 분량을 계산한 후 1원 단위를 10원 단위로 반올림
+                    // 부가가치세 계산: 10% 분량을 계산한 후 1원 단위를 10원 단위로 "무조건 버림(floor)"
                     const rawVat = (totalAmount * 0.1) / 1.1;
-                    const vat = Math.round(rawVat / 10) * 10;
+                    const vat = Math.floor(rawVat / 10) * 10;
 
                     // 결과 갱신
                     resultSupply.textContent = `${formatNumber(supply)} 원`;
@@ -469,7 +469,7 @@
 
         function resetVatCalculator() {
             clearInput('payment-input');
-         // showToast("계산기가 초기화되었습니다.");
+            showToast("계산기가 초기화되었습니다.");
         }
 
         // 계산 결과 클립보드 패키징 및 복사 실행
@@ -483,7 +483,7 @@
             const vat = document.getElementById('result-vat').textContent;
             const total = document.getElementById('result-total').textContent;
 
-            const copyString = `[부가세 계산 결과]\n- 실제 지불총액: ${total}\n- 공급가액(10원반올림): ${supply}\n- 부가가치세(10원반올림): ${vat}`;
+            const copyString = `[부가세 계산 결과]\n- 실제 지불총액: ${total}\n- 공급가액(10원올림): ${supply}\n- 부가가치세(10원버림): ${vat}`;
             secureCopyText(copyString);
         }
 
