@@ -1,7 +1,7 @@
 {
   "name": "Expense Helper",
   "short_name": "경비도우미",
-  "start_url": "ExpenseHelper3.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
