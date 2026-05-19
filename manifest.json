@@ -1,0 +1,15 @@
+{
+  "name": "Expense Helper",
+  "short_name": "경비도우미",
+  "start_url": "ExpenseHelper3.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "ewallet.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

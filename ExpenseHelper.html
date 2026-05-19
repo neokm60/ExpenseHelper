@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Helper - 웹 버디</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter & Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons for Beautiful UI -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+        }
+        /* 포커스 시 부드러운 아웃라인 효과 */
+        .focus-ring:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <div class="flex-grow container mx-auto px-4 py-8 max-w-4xl">
+        
+        <!-- HEADER -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 text-white rounded-2xl shadow-lg mb-4">
+                <i class="fa-solid fa-briefcase text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Expense Helper</h1>
+            <p class="mt-2 text-slate-500">부가가치세 간편 계산과 국세청 사업자 등록 상태 조회를 한 번에 해결하세요.</p>
+        </header>
+
+        <!-- MAIN GRID CONTENT -->
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- 1. 부가세 계산기 섹션 -->
+            <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-calculator text-lg"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-900">부가세 자동 계산기</h2>
+                    </div>
+
+                    <!-- 입력 창 -->
+                    <div class="mb-6">
+                        <label for="payment-input" class="block text-sm font-medium text-slate-600 mb-2">실제 결제 금액 입력 (소비자 지불총액)</label>
+                        <div class="relative rounded-lg shadow-sm">
+                            <input 
+                                type="text" 
+                                id="payment-input" 
+                                class="focus-ring block w-full rounded-xl border border-slate-200 px-4 py-3.5 pr-12 text-lg font-semibold text-slate-900 placeholder:text-slate-400" 
+                                placeholder="예: 1,100,000"
+                            >
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                <span class="text-slate-500 font-medium">원</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 계산 결과 리포트 -->
+                    <div class="space-y-4 bg-slate-50 rounded-xl p-5 border border-slate-100">
+                        <div class="flex justify-between items-center py-1">
+                            <span class="text-slate-500 text-sm">공급가액 <span class="text-xs text-slate-400">(원금, 10원 단위 반올림)</span></span>
+                            <span class="text-lg font-semibold text-slate-900" id="result-supply">0 원</span>
+                        </div>
+                        <div class="flex justify-between items-center py-1 border-t border-slate-200/60">
+                            <span class="text-slate-500 text-sm">부가가치세 <span class="text-xs text-slate-400">(10%, 10원 단위 반올림)</span></span>
+                            <span class="text-lg font-semibold text-indigo-600" id="result-vat">0 원</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-3 border-t border-dashed border-slate-300">
+                            <span class="font-bold text-slate-900 text-sm">실제 최종 지불액</span>
+                            <span class="text-xl font-black text-emerald-600" id="result-total">0 원</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-xs text-slate-400">
+                    <i class="fa-solid fa-circle-info mr-1"></i> 공급가액과 부가세는 각각 소수 첫째자리(1원 단위)에서 반올림되어 10원 단위로 보정됩니다.
+                </div>
+            </section>
+
+            <!-- 2. 사업자 조회 및 설정 섹션 -->
+            <section class="space-y-6">
+                
+                <!-- 사업자 상태조회 카드 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-900">국세청 사업자 상태 조회</h2>
+                    </div>
+
+                    <!-- 사업자 번호 입력 -->
+                    <div class="mb-4">
+                        <label for="biz-no-input" class="block text-sm font-medium text-slate-600 mb-2">사업자등록번호</label>
+                        <input 
+                            type="text" 
+                            id="biz-no-input" 
+                            maxlength="12"
+                            class="focus-ring block w-full rounded-xl border border-slate-200 px-4 py-3.5 text-lg font-semibold text-slate-900 placeholder:text-slate-400" 
+                            placeholder="123-45-67890 (- 자동 입력)"
+                        >
+                    </div>
+
+                    <button 
+                        id="btn-search"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md shadow-indigo-100 transition duration-150 flex items-center justify-center gap-2"
+                    >
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span>국세청 실시간 상태 조회</span>
+                    </button>
+
+                    <!-- API 조회 결과 영역 -->
+                    <div class="mt-6">
+                        <div id="api-result-box" class="hidden rounded-xl p-5 border">
+                            <!-- 여기에 동적으로 결과가 출력됨 -->
+                        </div>
+                        <div id="api-result-placeholder" class="text-center py-8 text-slate-400 border border-dashed border-slate-200 rounded-xl">
+                            <i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>
+                            <span class="text-xs">조회된 정보가 없습니다. 번호 입력 후 조회해 보세요.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API 설정 카드 (유저가 직접 키 입력 가능) -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <button id="toggle-settings-btn" class="flex items-center justify-between w-full text-left">
+                        <span class="text-sm font-bold text-slate-700"><i class="fa-solid fa-gear mr-2 text-slate-500"></i>개발자용 API 설정</span>
+                        <i id="settings-arrow" class="fa-solid fa-chevron-down text-slate-400 transition-transform"></i>
+                    </button>
+                    
+                    <div id="settings-panel" class="hidden mt-4 pt-4 border-t border-slate-100 space-y-4">
+                        <div>
+                            <label for="api-key-input" class="block text-xs font-semibold text-slate-500 mb-1">공공데이터포털 인증키 (Encoding)</label>
+                            <input 
+                                type="password" 
+                                id="api-key-input" 
+                                class="focus-ring block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" 
+                                placeholder="인증키를 입력하면 자동 저장됩니다"
+                            >
+                            <p class="text-[11px] text-slate-400 mt-1">이 키는 보안을 위해 사용자 개인 PC 브라우저에만 암호화 보관됩니다.</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-indigo-50/50 rounded-xl">
+                            <div class="pr-2">
+                                <span class="block text-xs font-bold text-slate-800">CORS 프록시 우회 사용</span>
+                                <span class="text-[11px] text-slate-400">웹 브라우저의 도메인 제한 오류(CORS)를 우회 해결합니다.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="cors-toggle" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="container mx-auto px-4 text-center text-xs text-slate-400">
+            &copy; 2026 Expense Helper Web. JSP@DEIF All rights reserved.
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 전역 상태 및 데이터 관리
+        const STATE = {
+            apiKey: localStorage.getItem('BIZ_API_KEY') || '',
+            useCorsProxy: localStorage.getItem('BIZ_CORS_PROXY') !== 'false' // 기본값 true
+        };
+
+        // DOM 요소 로드
+        document.addEventListener('DOMContentLoaded', () => {
+            initVatCalculator();
+            initSettings();
+            initBizSearch();
+        });
+
+        // 1. VAT 계산기 기능 정의
+        function initVatCalculator() {
+            const paymentInput = document.getElementById('payment-input');
+            const resultSupply = document.getElementById('result-supply');
+            const resultVat = document.getElementById('result-vat');
+            const resultTotal = document.getElementById('result-total');
+
+            // 포맷팅 함수 (세자리 콤마 추가)
+            const formatNumber = (num) => {
+                return num.toLocaleString('ko-KR');
+            };
+
+            paymentInput.addEventListener('input', (e) => {
+                // 숫자만 남기기
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                
+                // 천 단위 콤마 형식으로 입력창 텍스트 업데이트
+                if (value) {
+                    e.target.value = formatNumber(parseInt(value));
+                } else {
+                    e.target.value = '';
+                }
+
+                const totalAmount = parseInt(value) || 0;
+
+                if (totalAmount > 0) {
+                    // 공급가액 계산: 1.1로 나눈 후 1원 단위를 10원 단위로 반올림
+                    const rawSupply = totalAmount / 1.1;
+                    const supply = Math.round(rawSupply / 10) * 10;
+
+                    // 부가가치세 계산: 10% 분량을 계산한 후 1원 단위를 10원 단위로 반올림
+                    const rawVat = (totalAmount * 0.1) / 1.1;
+                    const vat = Math.round(rawVat / 10) * 10;
+
+                    // 결과 갱신
+                    resultSupply.textContent = `${formatNumber(supply)} 원`;
+                    resultVat.textContent = `${formatNumber(vat)} 원`;
+                    resultTotal.textContent = `${formatNumber(totalAmount)} 원`;
+                } else {
+                    resultSupply.textContent = '0 원';
+                    resultVat.textContent = '0 원';
+                    resultTotal.textContent = '0 원';
+                }
+            });
+        }
+
+        // 2. 환경설정 및 유틸리티 초기화
+        function initSettings() {
+            const toggleBtn = document.getElementById('toggle-settings-btn');
+            const settingsPanel = document.getElementById('settings-panel');
+            const arrow = document.getElementById('settings-arrow');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const corsToggle = document.getElementById('cors-toggle');
+
+            // 아코디언 메뉴 토글
+            toggleBtn.addEventListener('click', () => {
+                settingsPanel.classList.toggle('hidden');
+                arrow.classList.toggle('rotate-180');
+            });
+
+            // 기존 로컬 값 세팅
+            if (STATE.apiKey) {
+                apiKeyInput.value = STATE.apiKey;
+            }
+            corsToggle.checked = STATE.useCorsProxy;
+
+            // 값 변경 이벤트 리스너 등록
+            apiKeyInput.addEventListener('change', (e) => {
+                const key = e.target.value.trim();
+                STATE.apiKey = key;
+                localStorage.setItem('BIZ_API_KEY', key);
+            });
+
+            corsToggle.addEventListener('change', (e) => {
+                STATE.useCorsProxy = e.target.checked;
+                localStorage.setItem('BIZ_CORS_PROXY', e.target.checked);
+            });
+        }
+
+        // 3. 국세청 API 사업자 상태 조회 기능 정의 (멀티 프록시 엔진 탑재)
+        function initBizSearch() {
+            const bizInput = document.getElementById('biz-no-input');
+            const searchBtn = document.getElementById('btn-search');
+            const resultBox = document.getElementById('api-result-box');
+            const placeholder = document.getElementById('api-result-placeholder');
+
+            // 하이픈(-) 입력 포맷 자동 조절
+            bizInput.addEventListener('input', (e) => {
+                let number = e.target.value.replace(/[^0-9]/g, '');
+                let formatted = '';
+
+                if (number.length <= 3) {
+                    formatted = number;
+                } else if (number.length <= 5) {
+                    formatted = `${number.slice(0, 3)}-${number.slice(3)}`;
+                } else {
+                    formatted = `${number.slice(0, 3)}-${number.slice(3, 5)}-${number.slice(5, 10)}`;
+                }
+                e.target.value = formatted;
+            });
+
+            // 공공데이터포털 인증키(Encoding/Decoding)의 중복 인코딩 방지 처리기
+            function prepareServiceKey(key) {
+                const trimmed = key.trim();
+                // 이미 인코딩된 키인 경우 (보통 %2F, %2B 등이 포함됨) 그대로 반환하여 중복 인코딩 방지
+                if (trimmed.includes('%')) {
+                    return trimmed;
+                }
+                // 디코딩 키인 경우 한 번만 인코딩하여 반환
+                return encodeURIComponent(trimmed);
+            }
+
+            // 멀티 프록시 폴백 페치 엔진 구현 (보안 샌드박스 극복 및 정교한 오류 파싱)
+            async function fetchWithFallback(targetUrl, requestBody) {
+                const proxyCandidates = [
+                    // 1순위: corsproxy.io (가장 현대적이고 POST 방식 완벽 전송 가능)
+                    {
+                        name: "CorsProxy.io",
+                        getUrl: (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+                    },
+                    // 2순위: CodeTabs Proxy (무료 고성능 프록시)
+                    {
+                        name: "CodeTabs Proxy",
+                        getUrl: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                    },
+                    // 3순위: ThingProxy (오래된 범용 프록시)
+                    {
+                        name: "ThingProxy",
+                        getUrl: (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+                    },
+                    // 4순위: Direct Fetch (CORS 프록시 미사용 - 직접 요청)
+                    {
+                        name: "Direct Fetch (No Proxy)",
+                        getUrl: (url) => url
+                    }
+                ];
+
+                let lastError = null;
+
+                // 순차적으로 프록시 후보군을 호출
+                for (const proxy of proxyCandidates) {
+                    // 유저가 CORS 설정을 수동으로 껐는데 프록시 도메인 후보라면 건너뜀
+                    if (!STATE.useCorsProxy && proxy.name !== "Direct Fetch (No Proxy)") {
+                        continue;
+                    }
+
+                    try {
+                        console.log(`📡 [비즈니스 헬퍼] ${proxy.name} 채널로 API 연결 시도 중...`);
+                        const requestUrl = proxy.getUrl(targetUrl);
+                        
+                        const response = await fetch(requestUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(requestBody)
+                        });
+
+                        if (!response.ok) {
+                            let errorDetail = "";
+                            try {
+                                const errJson = await response.json();
+                                if (errJson && errJson.msg) {
+                                    errorDetail = errJson.msg;
+                                } else if (errJson && errJson.message) {
+                                    errorDetail = errJson.message;
+                                }
+                            } catch (e) {
+                                try {
+                                    errorDetail = await response.text();
+                                    // 너무 긴 HTML 응답인 경우 간소화
+                                    if (errorDetail.includes("<html") || errorDetail.length > 100) {
+                                        errorDetail = "서버 에러 응답";
+                                    }
+                                } catch (tErr) {}
+                            }
+                            const statusText = errorDetail ? `${response.status}: ${errorDetail}` : `${response.status}`;
+                            throw new Error(`상태 응답값 거부 (${statusText})`);
+                        }
+
+                        const data = await response.json();
+                        console.log(`✅ [비즈니스 헬퍼] ${proxy.name} 채널 호출 성공!`);
+                        return data;
+                    } catch (err) {
+                        console.warn(`❌ [비즈니스 헬퍼] ${proxy.name} 실패: ${err.message}`);
+                        lastError = err;
+                    }
+                }
+
+                // 모든 후보군이 다 막혔을 때 에러 발생
+                throw lastError || new Error("모든 우회 네트워크 채널이 현재 차단되었습니다.");
+            }
+
+            // 조회 버튼 클릭 액션
+            searchBtn.addEventListener('click', async () => {
+                const rawNo = bizInput.value.replace(/[^0-9]/g, '').trim();
+
+                if (rawNo.length !== 10) {
+                    showErrorResult("사업자등록번호 10자리를 정확히 입력해 주세요.");
+                    return;
+                }
+
+                if (!STATE.apiKey) {
+                    showErrorResult("API 서비스키가 등록되지 않았습니다.<br>하단의 '개발자용 API 설정'을 펼쳐서 <b>공공데이터포털 승인 키</b>를 입력해 주세요.");
+                    return;
+                }
+
+                // 로딩 상태 표출
+                searchBtn.disabled = true;
+                searchBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>조회 중...</span>`;
+                placeholder.classList.add('hidden');
+                resultBox.classList.remove('hidden');
+                resultBox.className = "rounded-xl p-5 border bg-slate-50 border-slate-200 text-slate-600 flex items-center justify-center gap-3";
+                resultBox.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-lg text-indigo-500"></i> 멀티프록시 네트워크 서버를 통해 국세청 데이터를 조회하고 있습니다...`;
+
+                try {
+                    // API 요청 주소 및 본문 (스마트 인코딩 적용하여 중복 인코딩 방지)
+                    const targetUrl = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${prepareServiceKey(STATE.apiKey)}`;
+                    const requestBody = { b_no: [rawNo] };
+
+                    // 업그레이드된 폴백 엔진 호출
+                    const responseData = await fetchWithFallback(targetUrl, requestBody);
+
+                    // 응답 데이터 기반 렌더링
+                    const bizData = responseData?.data?.[0];
+
+                    if (bizData) {
+                        if (!bizData.b_stt || bizData.b_stt.trim() === "") {
+                            showErrorResult("국세청에 등록되어 있지 않거나 정상적이지 않은 사업자등록번호입니다.");
+                        } else {
+                            showSuccessResult(bizData);
+                        }
+                    } else {
+                        showErrorResult("올바른 응답 데이터를 받지 못했습니다. 인증키를 다시 확인해 주세요.");
+                    }
+
+                } catch (error) {
+                    console.error(error);
+                    showErrorResult(`
+                        조회에 실패하였습니다.<br>
+                        <span class="text-xs text-red-500 block mt-1 font-semibold">${error.message}</span>
+                        <span class="text-xs text-slate-500 block mt-2">※ <b>원인 분석</b>: 400 에러의 대부분은 공공데이터포털에서 발급받은 <b>인증키(Encoding Key) 자체의 유효성</b> 문제이거나 승인 직후 동기화 대기 시간(1~2시간 소요) 때문입니다. 키를 정확히 확인해 보시고 잠시 후 다시 시도해 주세요.</span>
+                    `);
+                } finally {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>국세청 실시간 상태 조회</span>`;
+                }
+            });
+
+            // 성공 시 화면 표시
+            function showSuccessResult(data) {
+                resultBox.className = "rounded-xl p-5 border bg-emerald-50 border-emerald-200 text-emerald-800";
+                
+                // 폐업일자 포맷터 (예: 20260315 -> 2026년 03월 15일)
+                let endDtText = "";
+                if (data.end_dt && data.end_dt.length === 8) {
+                    endDtText = `<div class="mt-1 text-sm"><span class="font-bold">폐업일자:</span> ${data.end_dt.slice(0, 4)}년 ${data.end_dt.slice(4, 6)}월 ${data.end_dt.slice(6)}일</div>`;
+                }
+
+                // 과세전환일자 포맷터
+                let changeDtText = "";
+                if (data.tax_type_change_dt && data.tax_type_change_dt.length === 8) {
+                    changeDtText = `<div class="mt-1 text-sm"><span class="font-bold">유형 전환일:</span> ${data.tax_type_change_dt.slice(0, 4)}년 ${data.tax_type_change_dt.slice(4, 6)}월 ${data.tax_type_change_dt.slice(6)}일</div>`;
+                }
+
+                resultBox.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-circle-check text-xl text-emerald-600 mt-1"></i>
+                        <div class="space-y-1">
+                            <h3 class="font-bold text-lg text-emerald-950">조회 완료</h3>
+                            <div class="text-sm mt-2"><span class="font-bold">사업자번호:</span> ${data.b_no}</div>
+                            <div class="text-sm"><span class="font-bold">납세자상태:</span> <span class="px-2 py-0.5 bg-emerald-100 rounded text-emerald-900 font-bold">${data.b_stt}</span></div>
+                            <div class="text-sm"><span class="font-bold">과세유형:</span> ${data.tax_type}</div>
+                            ${endDtText}
+                            ${changeDtText}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 에러 시 화면 표시
+            function showErrorResult(message) {
+                resultBox.className = "rounded-xl p-5 border bg-rose-50 border-rose-200 text-rose-800";
+                resultBox.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-xl text-rose-600 mt-0.5"></i>
+                        <div>
+                            <h3 class="font-bold text-slate-900 mb-1">알림</h3>
+                            <p class="text-sm text-rose-950">${message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
