@@ -239,7 +239,7 @@
                                     type="file" 
                                     id="receipt-file-input" 
                                     accept="image/*" 
-                                    capture="environment" 
+                               //   capture="environment" 
                                     class="hidden"
                                     onchange="handleReceiptScan(event)"
                                 >
@@ -390,13 +390,29 @@
             }
         });
 
-        function clearInput(inputId) {
-            const input = document.getElementById(inputId);
-            if (input) {
-                input.value = '';
-                input.dispatchEvent(new Event('input'));
-            }
-        }
+     //   function clearInput(inputId) {
+     //       const input = document.getElementById(inputId);
+     //       if (input) {
+     //           input.value = '';
+     //           input.dispatchEvent(new Event('input'));
+     //       }
+     //   }
+
+	function clearInput(inputId) {
+    	const input = document.getElementById(inputId);
+    	if (input) {
+        	input.value = '';
+        	input.dispatchEvent(new Event('input'));
+    	}
+    
+    // 사업자번호 입력창을 지울 때 조회 결과창도 초기화
+    if (inputId === 'biz-no-input') {
+        const resultBox = document.getElementById('api-result-box');
+        const placeholder = document.getElementById('api-result-placeholder');
+        resultBox.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+    }
+}
 
         // 스캔을 수행하기 전에 기존 입력된 번호 필드를 공란으로 비워주는 보조 함수
         function clearInputBeforeScan() {
@@ -689,6 +705,12 @@
                     formatted = `${number.slice(0, 3)}-${number.slice(3, 5)}-${number.slice(5, 10)}`;
                 }
                 e.target.value = formatted;
+
+		// 번호가 수정되면 결과창 초기화
+    		const resultBox = document.getElementById('api-result-box');
+    		const placeholder = document.getElementById('api-result-placeholder');
+    		resultBox.classList.add('hidden');
+    		placeholder.classList.remove('hidden');
             });
 
             function prepareServiceKey(key) {
@@ -785,12 +807,14 @@
                     return;
                 }
 
-                searchBtn.disabled = true;
-                searchBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>국세청 데이터 검색중...</span>`;
+                // [수정사항] 조회 버튼 클릭 즉시 이전 결과창 내용을 완전히 비우고 로딩 레이아웃 준비
                 placeholder.classList.add('hidden');
                 resultBox.classList.remove('hidden');
                 resultBox.className = "rounded-xl p-5 border bg-slate-50 border-slate-200 text-slate-600 flex items-center justify-center gap-3 text-xs";
                 resultBox.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-lg text-indigo-500"></i> 멀티프록시 보안망 우회 및 전송 중...`;
+
+                searchBtn.disabled = true;
+                searchBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>국세청 데이터 검색중...</span>`;
 
                 try {
                     const targetUrl = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${prepareServiceKey(STATE.apiKey)}`;
@@ -859,7 +883,6 @@
                 `;
             }
 
-            // 에러 시 화면 표시
             function showErrorResult(message) {
                 resultBox.className = "rounded-xl p-4 border bg-rose-50 border-rose-200 text-rose-800";
                 resultBox.innerHTML = `
