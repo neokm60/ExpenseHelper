@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Expense Helper for Finance</title>
+    
+    <!-- 브라우저 탭 아이콘 (비즈니스 💸 이모지 파비콘) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/1999/xlink%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+    
+    <!-- 모바일 크롬 테마 색상 및 단독 실행 PWA 설정 -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Tailwind CSS 및 FontAwesome CDN 수혈 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .allow-select {
+            user-select: text;
+        }
+        .focus-ring:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- 메인 대시보드 컨테이너 -->
+    <div class="flex-grow container mx-auto px-4 py-6 max-w-7xl pb-16">
+        
+        <!-- HEADER -->
+        <header class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-200">
+            <div class="flex items-center gap-3.5 text-center sm:text-left">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg active:scale-95 transition-transform duration-100">
+                    <i class="fa-solid fa-briefcase text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">Expense Helper for Finance</h1>
+                    <p class="text-xs text-slate-500">사업자등록번호 최대 100개 동시 조회가 가능한 로컬 스마트 업무 지원 팩</p>
+                </div>
+            </div>
+            
+            <!-- 부가세 자동 계산기 모달 오픈 버튼 -->
+            <button 
+                onclick="openVatModal()"
+                class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 rounded-xl text-xs font-bold flex items-center gap-2 border border-indigo-200/50 shadow-sm transition-all duration-150 active:scale-95"
+            >
+                <i class="fa-solid fa-calculator text-sm"></i>
+                <span>부가세 계산기 💸</span>
+            </button>
+        </header>
+
+        <!-- MAIN LAYOUT (데스크톱 2열 와이드 대시보드) -->
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- 1. 사업자 번호 대량 입력 & 환경설정 (좌측 5열) -->
+            <section class="lg:col-span-5 space-y-6">
+                
+                <!-- 입력 박스 카드 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-file-invoice text-sm"></i>
+                            </div>
+                            <h2 class="text-sm font-bold text-slate-900">조회 정보 입력</h2>
+                        </div>
+                        <button 
+                            onclick="clearInput('biz-nos-input')" 
+                            class="text-xs font-semibold text-slate-400 hover:text-rose-500 p-2 active:scale-90 transition-transform"
+                            title="초기화"
+                        >
+                            <i class="fa-solid fa-trash-can mr-1"></i>지우기
+                        </button>
+                    </div>
+
+                    <!-- 텍스트 영역 -->
+                    <div class="mb-4">
+                        <label for="biz-nos-input" class="block text-xs font-semibold text-slate-500 mb-2">
+                            엑셀에서 복사한 여러 행을 붙여넣으세요 (공란 자동 유지)
+                        </label>
+                        <div class="relative">
+                            <textarea 
+                                id="biz-nos-input" 
+                                rows="10"
+                                class="focus-ring allow-select block w-full rounded-xl border border-slate-200 p-4 text-xs font-semibold text-slate-900 placeholder:text-slate-300 placeholder:font-normal font-mono leading-relaxed custom-scrollbar" 
+                                placeholder="엑셀 범위를 드래그 복사한 뒤 여기에 붙여넣으세요.&#10;&#10;[감지 유형 예시]&#10;123-45-67890 (하이픈 포함 가능)&#10;삼성전자 5028112345 (이름 혼합 줄 자동 감지)&#10; (빈 줄이 있을 시 엑셀 정렬 유지를 위해 공란 건너뜀)"
+                            ></textarea>
+                            <div class="text-[10px] text-slate-400 mt-1.5 flex justify-between items-center">
+                                <span>줄바꿈 기준으로 행을 구별하며, 숫자 10자리를 자동 추출합니다.</span>
+                                <span id="parsed-count-badge" class="font-bold text-indigo-600">입력: 0행</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        id="btn-search"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-indigo-100 transition duration-150 flex items-center justify-center gap-2 text-xs"
+                    >
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span>국세청 실시간 일괄 조회 실행</span>
+                    </button>
+                </div>
+
+                <!-- API 설정 카드 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <button id="toggle-settings-btn" class="flex items-center justify-between w-full text-left">
+                        <span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-gear mr-1.5 text-slate-400"></i>내 로컬 API 환경설정 (내 저장소)</span>
+                        <i id="settings-arrow" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+                    </button>
+                    
+                    <div id="settings-panel" class="hidden mt-4 pt-4 border-t border-slate-100 space-y-4">
+                        <div>
+                            <label for="api-key-input" class="block text-[11px] font-semibold text-slate-500 mb-1">공공데이터포털 일반 인증키 (Encoding)</label>
+                            <input 
+                                type="password" 
+                                id="api-key-input" 
+                                class="focus-ring allow-select block w-full rounded-lg border border-slate-200 px-3 py-2 text-xs" 
+                                placeholder="인증키를 입력하면 브라우저 내부(LocalStorage)에만 안전하게 자동 보관됩니다"
+                            >
+                            <p class="text-[10px] text-slate-400 mt-1 leading-normal">인증키는 타 서버에 절대 수집되지 않으며, 사용자 브라우저(로컬 스토리지)에만 안전하게 암호화 보관됩니다.</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-indigo-50/50 rounded-xl">
+                            <div class="pr-2">
+                                <span class="block text-xs font-bold text-slate-800">CORS 프록시 우회 사용</span>
+                                <span class="text-[10px] text-slate-400 block leading-tight">로컬 파일 실행 시 발생하는 브라우저 자체 차단(CORS) 에러를 우회합니다.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="cors-toggle" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- 2. 실시간 조회 결과 테이블 대시보드 (우측 7열) -->
+            <section class="lg:col-span-7 space-y-4">
+                
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 min-h-[460px] flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-square-poll-vertical text-sm"></i>
+                                </div>
+                                <h2 class="text-sm font-bold text-slate-900">실시간 조회 결과 리포트</h2>
+                            </div>
+                            
+                            <button 
+                                id="btn-copy-excel" 
+                                onclick="copyResultsForExcel()" 
+                                class="hidden px-2.5 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all duration-100 active:scale-95"
+                            >
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>엑셀 붙여넣기용 복사</span>
+                            </button>
+                        </div>
+
+                        <!-- 결과 테이블 본체 -->
+                        <div id="api-result-container" class="hidden border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50 transition-all duration-300">
+                            <div class="max-h-[360px] overflow-y-auto overflow-x-auto custom-scrollbar">
+                                <table class="min-w-full divide-y divide-slate-200 text-left text-[11px]">
+                                    <thead class="bg-slate-100 text-slate-600 uppercase font-semibold sticky top-0 z-10 shadow-sm">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-center w-12">행</th>
+                                            <th class="px-3 py-2.5">검출 사업자번호</th>
+                                            <th class="px-3 py-2.5">납세자 상태</th>
+                                            <th class="px-3 py-2.5">과세유형 상세</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="api-result-tbody" class="divide-y divide-slate-200 bg-white text-slate-700 allow-select font-mono">
+                                        <!-- 자바스크립트로 동적 로드 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 빈 상태 가이드 -->
+                        <div id="api-result-placeholder" class="text-center py-20 text-slate-400 border border-dashed border-slate-200 rounded-2xl bg-slate-50/30">
+                            <i class="fa-regular fa-folder-open text-3xl mb-3 block text-slate-300"></i>
+                            <span class="text-xs">데이터를 입력하고 '조회 실행' 버튼을 클릭하면<br>여기에 실시간 엑셀 정렬 맞춤형 결과표가 제공됩니다.</span>
+                        </div>
+                    </div>
+
+                    <!-- 결과 요약 하단 정보 배지 -->
+                    <div id="api-summary-stats" class="hidden mt-4 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] flex flex-wrap gap-2 text-slate-500 justify-between items-center font-semibold">
+                        <span id="summary-total-text">총 0건 조회</span>
+                        <div class="flex gap-2">
+                            <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded">계속: <span id="summary-active-count">0</span></span>
+                            <span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded">폐/휴업: <span id="summary-closed-count">0</span></span>
+                            <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">형식오류: <span id="summary-error-count">0</span></span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- 부가세 자동 계산기 전용 단독 모달 윈도우 -->
+    <div 
+        id="vat-modal" 
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 transition-all duration-200"
+    >
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-all duration-300">
+            <!-- 모달 헤더 -->
+            <div class="px-5 py-4 bg-indigo-600 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-base"></i>
+                    <h3 class="font-bold text-sm">부가세 자동 계산기 (10원 단위 보정)</h3>
+                </div>
+                <button 
+                    onclick="closeVatModal()"
+                    class="w-7 h-7 hover:bg-indigo-700 rounded-full flex items-center justify-center transition-colors active:scale-90"
+                >
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- 모달 컨텐츠 본체 -->
+            <div class="p-5">
+                <!-- 실제 결제액 입력창 -->
+                <div class="mb-5">
+                    <label for="payment-input" class="block text-xs font-semibold text-slate-500 mb-2">실제 결제 금액 입력 (소비자 지불총액)</label>
+                    <div class="relative rounded-lg shadow-sm">
+                        <input 
+                            type="text" 
+                            id="payment-input" 
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            class="focus-ring allow-select block w-full rounded-xl border border-slate-200 px-4 py-3 text-base font-bold text-slate-900 placeholder:text-slate-300 placeholder:font-normal" 
+                            placeholder="예: 1,234,567"
+                        >
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 gap-1">
+                            <button 
+                                id="btn-clear-payment" 
+                                class="hidden p-1 text-slate-400 hover:text-slate-600 active:scale-90 transition-all"
+                                onclick="clearInput('payment-input')"
+                            >
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </button>
+                            <span class="text-slate-500 font-semibold text-xs">원</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 실시간 결과 리포트 박스 -->
+                <div class="space-y-3.5 bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <div class="flex justify-between items-center py-1">
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-semibold">공급가액 <span class="text-[10px] text-slate-400">(원금)</span></span>
+                            <span class="text-[9px] text-slate-400 leading-none">1원 단위 무조건 올림 보정</span>
+                        </div>
+                        <span class="text-sm font-bold text-slate-900 allow-select" id="result-supply">0 원</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-t border-slate-200/60">
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-semibold">부가가치세 <span class="text-[10px] text-indigo-500/80">(10%)</span></span>
+                            <span class="text-[9px] text-slate-400 leading-none">1원 단위 무조건 버림 보정</span>
+                        </div>
+                        <span class="text-sm font-bold text-indigo-600 allow-select" id="result-vat">0 원</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-dashed border-slate-300">
+                        <span class="font-bold text-slate-900 text-xs">최종 실지불액 (실제 거래 금액 원형 보존)</span>
+                        <span class="text-base font-black text-emerald-600 allow-select" id="result-total">0 원</span>
+                    </div>
+                </div>
+
+                <!-- 하단 툴바 및 도움말 -->
+                <div class="mt-5 flex items-center justify-between pt-4 border-t border-slate-100 gap-2">
+                    <span class="text-[10px] text-slate-400 leading-tight">
+                        <i class="fa-solid fa-circle-info mr-1 text-indigo-400"></i> 공급가는 올림, 부가세는 버림 처리되며 결제액 원형은 보존됩니다.
+                    </span>
+                    <button 
+                        id="btn-copy-vat"
+                        onclick="copyVatResults()"
+                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all duration-100 active:scale-95"
+                    >
+                        <i class="fa-regular fa-copy"></i>
+                        <span>계산 결과 복사</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 피드백 알림 메세지 레이어 -->
+    <div id="toast-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-1.5 z-50">
+        <i class="fa-solid fa-info-circle text-indigo-400"></i>
+        <span id="toast-text">알림 메세지</span>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="container mx-auto px-4 text-center text-[11px] text-slate-400">
+            &copy; 2026 Expense Helper 4 Finance. JSP@DEIF All rights reserved.
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 브라우저 전역 상태 관리 저장 객체
+        const STATE = {
+            apiKey: localStorage.getItem('BIZ_API_KEY') || '',
+            useCorsProxy: localStorage.getItem('BIZ_CORS_PROXY') !== 'false',
+            parsedItems: [] 
+        };
+
+        // DOM 콘텐츠 로드 완료 시 구동 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            initVatCalculator();
+            initSettings();
+            initBizSearch();
+        });
+
+        // 입력창 데이터 삭제 및 연쇄 반응 유틸리티
+        function clearInput(inputId) {
+            const input = document.getElementById(inputId);
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+        }
+
+        let toastShowTime = 0;
+
+        // 알림 알리미 전용 고유 모바일 플로팅 토스트 컴포넌트 호출기
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast-message');
+            const toastText = document.getElementById('toast-text');
+            toastText.textContent = message;
+            
+            if (isSuccess) {
+                toast.className = "fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-5 py-3 rounded-full shadow-xl opacity-100 flex items-center gap-1.5 z-50 transition-all duration-300 pointer-events-auto cursor-pointer";
+            } else {
+                toast.className = "fixed bottom-8 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-xs px-5 py-3 rounded-full shadow-xl opacity-100 flex items-center gap-1.5 z-50 transition-all duration-300 pointer-events-auto cursor-pointer";
+            }
+
+            toastShowTime = Date.now();
+
+            // 이전 자동종료 타이머가 남아있다면 초기화 후 재설정
+            if (window.toastTimer) clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                hideToast();
+            }, 2500);
+        }
+
+        // 토스트 알림 명시적 숨기기 처리기
+        function hideToast() {
+            const toast = document.getElementById('toast-message');
+            if (toast) {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.remove('opacity-100', 'pointer-events-auto');
+            }
+        }
+
+        // 화면 어느 곳이든 클릭하면 활성화되어 있던 토스트 메시지를 즉시 은닉
+        document.addEventListener('click', () => {
+            if (Date.now() - toastShowTime > 150) {
+                hideToast();
+            }
+        });
+
+        // 안전 클립보드 복사 엔진
+        function secureCopyText(textToCopy) {
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (successful) {
+                    showToast("클립보드 복사 완료!");
+                } else {
+                    showToast("복사 처리에 실패했습니다.", false);
+                }
+            } catch (err) {
+                console.error("복사 유틸리티 예외 오류", err);
+                showToast("시스템 클립보드 복사 에러", false);
+            }
+        }
+
+        // 부가세 모달 관련 전용 스크립트 인터페이스
+        function openVatModal() {
+            const modal = document.getElementById('vat-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+            document.getElementById('payment-input').focus();
+        }
+
+        function closeVatModal() {
+            const modal = document.getElementById('vat-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = ''; // 배경 스크롤 허용
+        }
+
+        // ESC 버튼 클릭 시 팝업 닫기 지원
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeVatModal();
+        });
+
+        // 팝업 검은 장막(백드롭) 클릭 시 닫기
+        document.getElementById('vat-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('vat-modal')) {
+                closeVatModal();
+            }
+        });
+
+        function initVatCalculator() {
+            const paymentInput = document.getElementById('payment-input');
+            const resultSupply = document.getElementById('result-supply');
+            const resultVat = document.getElementById('result-vat');
+            const resultTotal = document.getElementById('result-total');
+            const clearBtn = document.getElementById('btn-clear-payment');
+
+            const formatNumber = (num) => {
+                return num.toLocaleString('ko-KR');
+            };
+
+            paymentInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                
+                if (value) {
+                    e.target.value = formatNumber(parseInt(value));
+                    clearBtn.classList.remove('hidden');
+                    clearBtn.classList.add('flex');
+                } else {
+                    e.target.value = '';
+                    clearBtn.classList.add('hidden');
+                }
+
+                const totalAmount = parseInt(value) || 0;
+
+                if (totalAmount > 0) {
+                    // 공급가액: 1.1로 나누고 1원 단위에서 무조건 올림(ceil)하여 10원 단위 보정 적용
+                    const rawSupply = totalAmount / 1.1;
+                    const supply = Math.ceil(rawSupply / 10) * 10;
+
+                    // 부가가치세: 공급가와 무관하게 10% 세율을 구한 후, 1원 단위에서 무조건 버림(floor)하여 10원 단위 처리
+                    const rawVat = (totalAmount * 0.1) / 1.1;
+                    const vat = Math.floor(rawVat / 10) * 10;
+
+                    resultSupply.textContent = `${formatNumber(supply)} 원`;
+                    resultVat.textContent = `${formatNumber(vat)} 원`;
+                    resultTotal.textContent = `${formatNumber(totalAmount)} 원`;
+                } else {
+                    resultSupply.textContent = '0 원';
+                    resultVat.textContent = '0 원';
+                    resultTotal.textContent = '0 원';
+                }
+            });
+        }
+
+        function copyVatResults() {
+            const payment = document.getElementById('payment-input').value || "0";
+            if (payment === "0") {
+                showToast("결제 금액 정보를 먼저 입력해 주세요.", false);
+                return;
+            }
+            const supply = document.getElementById('result-supply').textContent;
+            const vat = document.getElementById('result-vat').textContent;
+            const total = document.getElementById('result-total').textContent;
+
+            const copyString = `[부가세 계산 결과]\n- 실제 지불총액: ${total}\n- 공급가액(10원 올림): ${supply}\n- 부가가치세(10원 버림): ${vat}`;
+            secureCopyText(copyString);
+        }
+
+        function initSettings() {
+            const toggleBtn = document.getElementById('toggle-settings-btn');
+            const settingsPanel = document.getElementById('settings-panel');
+            const arrow = document.getElementById('settings-arrow');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const corsToggle = document.getElementById('cors-toggle');
+
+            toggleBtn.addEventListener('click', () => {
+                settingsPanel.classList.toggle('hidden');
+                arrow.classList.toggle('rotate-180');
+            });
+
+            if (STATE.apiKey) {
+                apiKeyInput.value = STATE.apiKey;
+            }
+            corsToggle.checked = STATE.useCorsProxy;
+
+            apiKeyInput.addEventListener('change', (e) => {
+                const key = e.target.value.trim();
+                STATE.apiKey = key;
+                localStorage.setItem('BIZ_API_KEY', key);
+                showToast("인증키가 기기 안전 저장소에 기록되었습니다.");
+            });
+
+            corsToggle.addEventListener('change', (e) => {
+                STATE.useCorsProxy = e.target.checked;
+                localStorage.setItem('BIZ_CORS_PROXY', e.target.checked);
+                showToast(`CORS 프록시 기능이 ${e.target.checked ? '활성화' : '비활성화'}되었습니다.`);
+            });
+        }
+
+        function initBizSearch() {
+            const bizNosInput = document.getElementById('biz-nos-input');
+            const searchBtn = document.getElementById('btn-search');
+            const resultContainer = document.getElementById('api-result-container');
+            const placeholder = document.getElementById('api-result-placeholder');
+            const resultTbody = document.getElementById('api-result-tbody');
+            const parsedCountBadge = document.getElementById('parsed-count-badge');
+            const btnCopyExcel = document.getElementById('btn-copy-excel');
+            const summaryStats = document.getElementById('api-summary-stats');
+
+            // 실시간 실입력 줄 수 체크 카운터
+            bizNosInput.addEventListener('input', () => {
+                const text = bizNosInput.value;
+                if (!text.trim()) {
+                    parsedCountBadge.textContent = "입력: 0행";
+                    return;
+                }
+                const lines = text.split('\n');
+                parsedCountBadge.textContent = `입력: ${lines.length}행`;
+            });
+
+            function prepareServiceKey(key) {
+                const trimmed = key.trim();
+                if (trimmed.includes('%')) {
+                    return trimmed;
+                }
+                return encodeURIComponent(trimmed);
+            }
+
+            // 4중 폴백 프록시 터널링 구축
+            async function fetchWithFallback(targetUrl, requestBody) {
+                const proxyCandidates = [
+                    {
+                        name: "CorsProxy.io",
+                        getUrl: (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+                    },
+                    {
+                        name: "CodeTabs Proxy",
+                        getUrl: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                    },
+                    {
+                        name: "ThingProxy",
+                        getUrl: (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+                    },
+                    {
+                        name: "Direct Fetch (No Proxy)",
+                        getUrl: (url) => url
+                    }
+                ];
+
+                let lastError = null;
+
+                for (const proxy of proxyCandidates) {
+                    if (!STATE.useCorsProxy && proxy.name !== "Direct Fetch (No Proxy)") {
+                        continue;
+                    }
+
+                    try {
+                        console.log(`📡 [프록시 엔진] ${proxy.name} 호출 시도 중...`);
+                        const requestUrl = proxy.getUrl(targetUrl);
+                        
+                        const response = await fetch(requestUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(requestBody)
+                        });
+
+                        if (!response.ok) {
+                            let errorDetail = "";
+                            try {
+                                const errJson = await response.json();
+                                if (errJson && errJson.msg) errorDetail = errJson.msg;
+                                else if (errJson && errJson.message) errorDetail = errJson.message;
+                            } catch (e) {
+                                try {
+                                    errorDetail = await response.text();
+                                    if (errorDetail.includes("<html") || errorDetail.length > 100) {
+                                        errorDetail = "서버 측 네트워크 거부";
+                                    }
+                                } catch (tErr) {}
+                            }
+                            throw new Error(errorDetail ? `${response.status}: ${errorDetail}` : `${response.status} 에러`);
+                        }
+
+                        const data = await response.json();
+                        console.log(`✅ [프록시 엔진] ${proxy.name} 채널 연동 성공!`);
+                        return data;
+                    } catch (err) {
+                        console.warn(`❌ [프록시 엔진] ${proxy.name} 실패: ${err.message}`);
+                        lastError = err;
+                    }
+                }
+
+                throw lastError || new Error("연결 가능한 네트워크 프록시 경로가 모두 거부되었습니다.");
+            }
+
+            // 국세청 조회 메인 엔진 실행부
+            searchBtn.addEventListener('click', async () => {
+                const text = bizNosInput.value;
+                if (!text.trim()) {
+                    showToast("조회할 텍스트 정보를 입력하거나 엑셀 데이터를 붙여넣으세요.", false);
+                    return;
+                }
+
+                if (!STATE.apiKey) {
+                    placeholder.classList.add('hidden');
+                    resultContainer.classList.remove('hidden');
+                    summaryStats.classList.add('hidden');
+                    resultTbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-4 py-8 text-center text-rose-600 font-bold bg-rose-50/50 rounded-xl">
+                                <i class="fa-solid fa-triangle-exclamation text-lg mb-2 block animate-bounce"></i>
+                                내 저장소에 API 서비스 인증키가 입력되지 않았습니다.<br>
+                                하단의 '내 로컬 API 환경설정' 메뉴를 열고 공공데이터포털 승인 키를 입력해 주세요.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                const lines = text.split('\n');
+                STATE.parsedItems = lines.map((line, idx) => {
+                    const originalLine = line.trim();
+                    const tokens = originalLine.split(/\s+/);
+                    let detectedNo = "";
+
+                    // 우선적으로 10자리 숫자 감지 시도
+                    for (const token of tokens) {
+                        const cleanedToken = token.replace(/[^0-9]/g, '');
+                        if (cleanedToken.length === 10) {
+                            detectedNo = cleanedToken;
+                            break;
+                        }
+                    }
+
+                    if (!detectedNo) {
+                        const allCleanedDigits = originalLine.replace(/[^0-9]/g, '');
+                        if (allCleanedDigits.length === 10) {
+                            detectedNo = allCleanedDigits;
+                        } else if (tokens.length > 0) {
+                            detectedNo = tokens[0].replace(/[^0-9]/g, '');
+                        }
+                    }
+
+                    const isBlank = originalLine === "";
+                    const isValid = !isBlank && detectedNo.length === 10;
+
+                    return {
+                        rowNum: idx + 1,
+                        originalText: originalLine,
+                        detectedNo: detectedNo,
+                        isBlank: isBlank,
+                        isValid: isValid,
+                        status: isBlank ? '공란' : (isValid ? '대기' : '형식오류 (10자리 아님)'),
+                        taxType: '',
+                        endDt: '',
+                        apiData: null
+                    };
+                });
+
+                const validNos = STATE.parsedItems.filter(item => item.isValid).map(item => item.detectedNo);
+
+                if (validNos.length === 0) {
+                    showToast("유효한 10자리 사업자등록번호가 없습니다.", false);
+                    renderResultsTable();
+                    return;
+                }
+
+                searchBtn.disabled = true;
+                searchBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>조회 중 (${validNos.length}건)...</span>`;
+                placeholder.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                summaryStats.classList.add('hidden');
+                resultTbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-4 py-8 text-center text-slate-500">
+                            <i class="fa-solid fa-spinner animate-spin text-lg text-indigo-500 mb-2 block"></i>
+                            국세청 실시간 DB 조회 전송 중... (100건 단위 자동 청크 분할 전송)
+                        </td>
+                    </tr>
+                `;
+
+                try {
+                    const chunks = [];
+                    for (let i = 0; i < validNos.length; i += 100) {
+                        chunks.push(validNos.slice(i, i + 100));
+                    }
+
+                    let allApiResponseData = [];
+                    const targetUrl = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${prepareServiceKey(STATE.apiKey)}`;
+
+                    for (const chunk of chunks) {
+                        const requestBody = { b_no: chunk };
+                        const response = await fetchWithFallback(targetUrl, requestBody);
+                        if (response && response.data) {
+                            allApiResponseData = allApiResponseData.concat(response.data);
+                        }
+                    }
+
+                    const apiDataMap = {};
+                    allApiResponseData.forEach(data => {
+                        if (data && data.b_no) {
+                            apiDataMap[data.b_no] = data;
+                        }
+                    });
+
+                    STATE.parsedItems.forEach(item => {
+                        if (item.isValid) {
+                            const res = apiDataMap[item.detectedNo];
+                            if (res) {
+                                if (!res.b_stt || res.b_stt.trim() === "") {
+                                    item.status = "미등록";
+                                    item.taxType = "국세청에 등록되지 않은 번호";
+                                } else {
+                                    item.status = res.b_stt;
+                                    item.taxType = res.tax_type;
+                                    item.endDt = res.end_dt;
+                                    item.apiData = res;
+                                }
+                            } else {
+                                item.status = "미조회";
+                                item.taxType = "API 응답 누락";
+                            }
+                        }
+                    });
+
+                    showToast(`조회 완료 (대상: ${validNos.length}건)`);
+                    renderResultsTable();
+
+                } catch (error) {
+                    console.error(error);
+                    resultTbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-4 py-8 text-center text-rose-800 bg-rose-50/50 rounded-xl">
+                                <i class="fa-solid fa-circle-exclamation text-lg text-rose-600 mb-2 block"></i>
+                                <span class="font-bold">국세청 API 일괄 조회에 실패하였습니다.</span>
+                                <span class="text-[11px] text-rose-500 block mt-1 font-semibold">${error.message}</span>
+                                <span class="text-[10px] text-slate-400 block mt-2 leading-relaxed">※ 주로 발생하는 원인은 <b>API 환경설정에 잘못된 인증키(Encoding Key)</b>가 입력되었거나, 공공데이터 포털 승인 직후 동기화 시간 지연 때문입니다.</span>
+                            </td>
+                        </tr>
+                    `;
+                } finally {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>국세청 실시간 일괄 조회 실행</span>`;
+                }
+            });
+
+            // 테이블 뷰 렌더러
+            function renderResultsTable() {
+                resultTbody.innerHTML = "";
+                
+                let activeCount = 0;
+                let closedCount = 0; 
+                let errorCount = 0;
+
+                STATE.parsedItems.forEach(item => {
+                    const tr = document.createElement('tr');
+                    
+                    let statusBadgeClass = "px-1.5 py-0.5 rounded text-[10px] font-bold inline-block";
+                    let statusText = item.status;
+                    let taxTypeText = item.taxType || "";
+
+                    if (item.status === '계속사업자') {
+                        statusBadgeClass += " bg-emerald-100 text-emerald-800 border border-emerald-200";
+                        activeCount++;
+                    } else if (item.status === '휴업자') {
+                        statusBadgeClass += " bg-amber-100 text-amber-800 border border-amber-200";
+                        closedCount++;
+                    } else if (item.status === '폐업자') {
+                        statusBadgeClass += " bg-rose-100 text-rose-800 border border-rose-200";
+                        closedCount++;
+                        if (item.endDt && item.endDt.length === 8) {
+                            taxTypeText += ` (폐업일: ${item.endDt.slice(0,4)}-${item.endDt.slice(4,6)}-${item.endDt.slice(6)})`;
+                        }
+                    } else if (item.status === '공란') {
+                        statusBadgeClass = "text-slate-300 italic";
+                        statusText = "공란 (건너뜀)";
+                    } else if (item.status === '형식오류 (10자리 아님)') {
+                        statusBadgeClass += " bg-slate-100 text-slate-500 border border-slate-200";
+                        statusText = "형식 오류";
+                        taxTypeText = "입력값: " + item.originalText;
+                        errorCount++;
+                    } else {
+                        statusBadgeClass += " bg-slate-100 text-slate-500 border border-slate-200";
+                        errorCount++;
+                    }
+
+                    tr.innerHTML = `
+                        <td class="px-3 py-2 text-slate-400 font-normal border-r border-slate-100 text-center">${item.rowNum}</td>
+                        <td class="px-3 py-2 font-bold tracking-tight text-slate-900">${item.isBlank ? '-' : (item.detectedNo ? formatBizNo(item.detectedNo) : item.originalText)}</td>
+                        <td class="px-3 py-2">
+                            <span class="${statusBadgeClass}">${statusText}</span>
+                        </td>
+                        <td class="px-3 py-2 text-slate-500 text-[10px] leading-relaxed truncate max-w-[200px]" title="${taxTypeText}">${taxTypeText || '-'}</td>
+                    `;
+                    
+                    resultTbody.appendChild(tr);
+                });
+
+                document.getElementById('summary-total-text').textContent = `총 ${STATE.parsedItems.length}개 행 완료`;
+                document.getElementById('summary-active-count').textContent = activeCount;
+                document.getElementById('summary-closed-count').textContent = closedCount;
+                document.getElementById('summary-error-count').textContent = errorCount;
+
+                btnCopyExcel.classList.remove('hidden');
+                summaryStats.classList.remove('hidden');
+            }
+
+            function formatBizNo(no) {
+                if (no.length === 10) {
+                    return `${no.slice(0,3)}-${no.slice(3,5)}-${no.slice(5)}`;
+                }
+                return no;
+            }
+        }
+
+        // 엑셀 탭(Tab) 기반 무오차 일대일 행 맞춤 복사 엔진
+        function copyResultsForExcel() {
+            if (!STATE.parsedItems || STATE.parsedItems.length === 0) {
+                showToast("복사할 조회 데이터가 없습니다.", false);
+                return;
+            }
+
+            const tsvLines = STATE.parsedItems.map(item => {
+                if (item.isBlank) {
+                    return "\t"; 
+                }
+                if (!item.isValid) {
+                    return `형식오류\t10자리 번호가 아닙니다.`;
+                }
+                
+                const status = item.status || "미조회";
+                let detail = item.taxType || "";
+                if (item.endDt && item.endDt.length === 8) {
+                    detail += ` (폐업일: ${item.endDt})`;
+                }
+
+                return `${status}\t${detail}`;
+            });
+
+            const tsvString = tsvLines.join('\r\n');
+            secureCopyText(tsvString);
+            showToast("엑셀 붙여넣기용 탭 데이터가 복사되었습니다!");
+        }
+    </script>
+</body>
+</html>
