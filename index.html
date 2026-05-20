@@ -1,31 +1,24 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Expense Helper - Mobile Home</title>
     <link class="apple-touch-icon" href="ewallet.png">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/1999/xlink%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
-    <!-- PWA를 위한 설정 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3b82f6">
     
-    <!-- 모바일 크롬 테마 색상 및 단독 실행 설정 -->
     <meta name="theme-color" content="#4f46e5">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts Inter & Noto Sans KR -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons for Beautiful UI -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tesseract.js OCR 수혈 -->
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
 
     <script>
@@ -62,10 +55,8 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
 
-    <!-- -->
     <div class="flex-grow container mx-auto px-4 py-6 max-w-4xl pb-24 md:pb-8">
         
-        <!-- HEADER -->
         <header class="text-center mb-6">
             <div class="inline-flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-lg mb-3 active:scale-95 transition-transform duration-100">
                 <i class="fa-solid fa-briefcase text-xl"></i>
@@ -74,7 +65,6 @@
             <p class="mt-1 text-sm text-slate-500">부가가치세 계산과 국세청 사업자 등록 상태 조회를 한 번에!!</p>
         </header>
 
-        <!-- 모바일 전용 탭 바 (모바일에서만 보이고 태블릿/데스크탑에서는 감춤) -->
         <div class="flex md:hidden bg-white p-1 rounded-xl shadow-sm border border-slate-100 mb-6 gap-1">
             <button 
                 id="tab-btn-vat" 
@@ -94,11 +84,8 @@
             </button>
         </div>
 
-        <!-- MAIN GRID CONTENT (모바일에서는 탭 선택에 의해 노출, 데스크탑은 그리드로 상시 병렬 배치) -->
         <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <!-- -->
-            <!-- 1. 부가세 계산기 섹션 -->
             <section 
                 id="sec-vat" 
                 class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between transition-all duration-300"
@@ -111,7 +98,6 @@
                             </div>
                             <h2 class="text-lg font-bold text-slate-900">부가세 자동 계산기</h2>
                         </div>
-                        <!-- 리셋 버튼 -->
                         <button 
                             onclick="resetVatCalculator()" 
                             class="text-xs font-semibold text-slate-400 hover:text-rose-500 p-2 active:scale-90 transition-transform"
@@ -121,7 +107,6 @@
                         </button>
                     </div>
 
-                    <!-- 입력 창 -->
                     <div class="mb-5">
                         <label for="payment-input" class="block text-xs font-semibold text-slate-500 mb-2">실제 결제 금액 입력 (소비자 지불총액)</label>
                         <div class="relative rounded-lg shadow-sm">
@@ -134,7 +119,6 @@
                                 placeholder="예: 1,100,000"
                             >
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 gap-1">
-                                <!-- 지우기 버튼 -->
                                 <button 
                                     id="btn-clear-payment" 
                                     class="hidden p-1 text-slate-400 hover:text-slate-600 active:scale-90 transition-all"
@@ -147,7 +131,6 @@
                         </div>
                     </div>
 
-                    <!-- 계산 결과 리포트 -->
                     <div class="space-y-4 bg-slate-50 rounded-xl p-4 border border-slate-100">
                         <div class="flex justify-between items-center py-1">
                             <div class="flex flex-col">
@@ -170,7 +153,6 @@
                     </div>
                 </div>
                 
-                <!-- 하단 툴바 (복사 기능) -->
                 <div class="mt-5 flex items-center justify-between pt-4 border-t border-slate-100 gap-2">
                     <span class="text-[11px] text-slate-400 leading-tight">
                         <i class="fa-solid fa-circle-info mr-1 text-indigo-400"></i> 공급가는 올림, 부가세는 버림 보정 처리됩니다.
@@ -186,11 +168,8 @@
                 </div>
             </section>
 
-            <!-- -->
-            <!-- 2. 사업자 조회 및 설정 섹션 -->
             <section id="sec-biz" class="space-y-6 hidden md:block transition-all duration-300">
                 
-                <!-- 사업자 상태조회 카드 -->
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
                     <div class="flex items-center justify-between mb-5">
                         <div class="flex items-center gap-3">
@@ -200,7 +179,6 @@
                             <h2 class="text-lg font-bold text-slate-900">국세청 사업자 상태 조회</h2>
                         </div>
                         
-                        <!-- 입력 초기화 -->
                         <button 
                             onclick="clearInput('biz-no-input')" 
                             class="text-xs font-semibold text-slate-400 hover:text-rose-500 p-2 active:scale-90 transition-transform"
@@ -210,7 +188,6 @@
                         </button>
                     </div>
 
-                    <!-- 사업자 번호 입력 및 카메라 버튼 연동 -->
                     <div class="mb-4">
                         <label for="biz-no-input" class="block text-xs font-semibold text-slate-500 mb-2">사업자등록번호</label>
                         <div class="flex gap-2">
@@ -223,7 +200,6 @@
                                     class="focus-ring allow-select block w-full rounded-xl border border-slate-200 pl-4 pr-10 py-3.5 text-lg font-bold text-slate-900 placeholder:text-slate-300 placeholder:font-normal" 
                                     placeholder="123-45-67890 (- 자동입력)"
                                 >
-                                <!-- 모바일용 포커스 유도 지우기 아이콘 -->
                                 <button 
                                     id="btn-clear-biz" 
                                     class="hidden absolute inset-y-0 right-3 items-center text-slate-400 hover:text-slate-600 active:scale-90 transition-all"
@@ -233,20 +209,19 @@
                                 </button>
                             </div>
                             
-                            <!-- 영수증 사진인식 스캔 버튼 (카메라) -->
                             <div class="relative">
                                 <input 
                                     type="file" 
                                     id="receipt-file-input" 
                                     accept="image/*" 
-									capture="environment"
+                                    capture="environment" 
                                     class="hidden"
                                     onchange="handleReceiptScan(event)"
                                 >
                                 <button 
                                     type="button"
                                     id="btn-receipt-scan"
-                                    onclick="clearInputBeforeScan(); document.getElementById('receipt-file-input').click();"
+                                    onclick="openImagePicker()"
                                     class="h-full px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl border border-indigo-200/50 flex items-center justify-center active:scale-95 transition-transform"
                                     title="영수증 사진 스캔 (자동인식)"
                                 >
@@ -255,7 +230,6 @@
                             </div>
                         </div>
                         
-                        <!-- OCR 판독 상태 표시창 -->
                         <div id="ocr-status-box" class="hidden mt-2 p-2 bg-indigo-50 border border-indigo-100 rounded-xl text-[10px] text-indigo-700 items-center justify-between">
                             <div class="flex items-center gap-1.5 font-semibold">
                                 <i class="fa-solid fa-spinner animate-spin"></i>
@@ -273,11 +247,9 @@
                         <span>국세청 실시간 상태 조회</span>
                     </button>
 
-                    <!-- API 조회 결과 영역 -->
                     <div class="mt-5">
                         <div id="api-result-box" class="hidden rounded-xl p-4 border relative">
-                            <!-- 동적 출력 및 복사 지원 -->
-                        </div>
+                            </div>
                         <div id="api-result-placeholder" class="text-center py-8 text-slate-400 border border-dashed border-slate-200 rounded-xl">
                             <i class="fa-regular fa-folder-open text-xl mb-1.5 block text-slate-300"></i>
                             <span class="text-xs">조회된 정보가 없습니다.</span>
@@ -285,7 +257,6 @@
                     </div>
                 </div>
 
-                <!-- API 설정 카드 (유저가 직접 키 입력 가능) -->
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
                     <button id="toggle-settings-btn" class="flex items-center justify-between w-full text-left">
                         <span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-gear mr-1.5 text-slate-400"></i>개발자용 API 설정</span>
@@ -321,20 +292,17 @@
         </main>
     </div>
 
-    <!-- 토스트 알림 메시지창 -->
     <div id="toast-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-1.5 z-50">
         <i class="fa-solid fa-info-circle text-indigo-400"></i>
         <span id="toast-text">복사되었습니다.</span>
     </div>
 
-    <!-- FOOTER (모바일에서는 탭바로 가려지지 않게 처리) -->
     <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
         <div class="container mx-auto px-4 text-center text-[11px] text-slate-400 safe-bottom">
             &copy; 2026 Expense Helper Web. JSP@DEIF All rights reserved.
         </div>
     </footer>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
         const STATE = {
             apiKey: localStorage.getItem('BIZ_API_KEY') || '',
@@ -390,29 +358,24 @@
             }
         });
 
-     //   function clearInput(inputId) {
-     //       const input = document.getElementById(inputId);
-     //       if (input) {
-     //           input.value = '';
-     //           input.dispatchEvent(new Event('input'));
-     //       }
-     //   }
-
-	function clearInput(inputId) {
-    	const input = document.getElementById(inputId);
-    	if (input) {
-        	input.value = '';
-        	input.dispatchEvent(new Event('input'));
-    	}
-    
-    // 사업자번호 입력창을 지울 때 조회 결과창도 초기화
-    if (inputId === 'biz-no-input') {
-        const resultBox = document.getElementById('api-result-box');
-        const placeholder = document.getElementById('api-result-placeholder');
-        resultBox.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-    }
-}
+        function clearInput(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.value = '';
+                input.dispatchEvent(new Event('input'));
+            }
+            
+            // [수정] 사업자등록번호 입력창을 지울 때 하단 조회 결과창도 원상태로 완전 초기화
+            if (inputId === 'biz-no-input') {
+                const resultBox = document.getElementById('api-result-box');
+                const placeholder = document.getElementById('api-result-placeholder');
+                if (resultBox && placeholder) {
+                    resultBox.classList.add('hidden');
+                    resultBox.innerHTML = '';
+                    placeholder.classList.remove('hidden');
+                }
+            }
+        }
 
         // 스캔을 수행하기 전에 기존 입력된 번호 필드를 공란으로 비워주는 보조 함수
         function clearInputBeforeScan() {
@@ -422,6 +385,26 @@
                 // 'x' 지우기 아이콘도 상태에 맞게 은닉하기 위한 인풋 디스패치 전송
                 bizInput.dispatchEvent(new Event('input'));
             }
+        }
+
+        // [추가] 카메라 촬영 / 갤러리 선택 분기처리 팝업 함수
+        function openImagePicker() {
+            const input = document.getElementById('receipt-file-input');
+            if (!input) return;
+            
+            // 사용자 선택에 따라 capture 속성을 동적으로 제어
+            const useCamera = confirm("영수증 스캔 방식을 선택하세요.\n\n[확인] : 카메라로 즉시 촬영\n[취소] : 갤러리/파일에서 사진 선택");
+
+            if (useCamera) {
+                input.setAttribute('capture', 'environment');
+            } else {
+                input.removeAttribute('capture');
+            }
+
+            // 안전한 연속 실행을 위한 벨류 초기화 후 트리거 작동
+            input.value = '';
+            clearInputBeforeScan();
+            input.click();
         }
 
         let toastShowTime = 0;
@@ -706,11 +689,12 @@
                 }
                 e.target.value = formatted;
 
-		// 번호가 수정되면 결과창 초기화
-    		const resultBox = document.getElementById('api-result-box');
-    		const placeholder = document.getElementById('api-result-placeholder');
-    		resultBox.classList.add('hidden');
-    		placeholder.classList.remove('hidden');
+                // [추가] 사용자가 입력창 글자를 직접 백스페이스로 모두 지웠을 때도 결과창을 연동하여 초기화
+                if (number.length === 0) {
+                    resultBox.classList.add('hidden');
+                    resultBox.innerHTML = '';
+                    placeholder.classList.remove('hidden');
+                }
             });
 
             function prepareServiceKey(key) {
@@ -807,7 +791,7 @@
                     return;
                 }
 
-                // [수정사항] 조회 버튼 클릭 즉시 이전 결과창 내용을 완전히 비우고 로딩 레이아웃 준비
+                // 조회 버튼 클릭 즉시 이전 결과창 내용을 완전히 비우고 로딩 레이아웃 준비
                 placeholder.classList.add('hidden');
                 resultBox.classList.remove('hidden');
                 resultBox.className = "rounded-xl p-5 border bg-slate-50 border-slate-200 text-slate-600 flex items-center justify-center gap-3 text-xs";
